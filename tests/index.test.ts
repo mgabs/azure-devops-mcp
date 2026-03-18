@@ -23,6 +23,12 @@ jest.mock('azure-devops-node-api', () => ({
       getItem: mockGetItem,
     }),
     getBuildApi: jest.fn().mockResolvedValue({}),
+    getCoreApi: jest.fn().mockResolvedValue({
+      getProjects: jest.fn().mockResolvedValue([]),
+    }),
+    getWorkApi: jest.fn().mockResolvedValue({
+      getTeamIterations: jest.fn().mockResolvedValue([]),
+    }),
   })),
 }));
 

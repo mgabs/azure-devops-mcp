@@ -1,0 +1,11 @@
+.env
+.env.example
+.mcp_token_cache.json
+.mcp/
+node_modules/
+dist/
+tests/
+jest.config.cjs
+tsconfig.json
+package-lock.json
+PRD_Azure_DevOps_MCP.md
