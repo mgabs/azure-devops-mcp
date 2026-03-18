@@ -1,35 +1,51 @@
 # Azure DevOps MCP Server
 
-A Model Context Protocol (MCP) server that enables LLM agents to interact directly with Azure DevOps services (Boards, Repos, Pipelines).
+A Model Context Protocol (MCP) server that enables LLM agents to interact directly with Azure DevOps services (Boards, Repos, Pipelines). Optimized for context efficiency, security, and developer experience.
 
 ## Features
 
-### Phase 1: Foundations
-- **`queryWorkItems`**: Run WIQL queries or fetch specific work items by ID.
-- **`listRepositories`**: List all repositories in a project.
-- **`getFileContent`**: Read raw file content from any branch or commit.
-- **`searchCode`**: Perform full-text code searches across the organization.
-
-### Phase 2: Hierarchical Planning
-- **`createEpic`**: Create top-level Epics.
-- **`createFeature`**: Create Features and link them to parent Epics.
-- **`createUserStory`**: Create User Stories and link them to parent Features.
-- **`createBug`**: Create Bug work items with repro steps and severity.
+### Core Operations (Boards & Projects)
+- **`queryWorkItems`**: Run WIQL queries or fetch specific work items by ID. Optimized with field filtering.
+- **`listProjects`**: List all projects in your organization.
+- **`listEpics` / `listFeatures` / `listUserStories`**: Quickly discover high-level planning items.
+- **`listBacklog`**: View all active User Stories and Bugs in a project.
+- **`listIterations` / `listAreas`**: Explore project structure and sprint schedules.
 - **`getWorkItemHierarchy`**: Explore parent/child relations for any work item.
 
-### Phase 3: DevOps Automation
+### Code & Collaboration (Repos)
+- **`listRepositories`**: List all repositories in a project.
+- **`getFileContent`**: Read raw file content from any branch or commit.
 - **`listPullRequests`**: List active, completed, or abandoned PRs.
-- **`getPRDiff`**: Retrieve code changes for a specific Pull Request.
+- **`getPRDiff`**: Retrieve commits and changes for a specific Pull Request.
 - **`commentOnPR`**: Post review feedback or inline comments.
+- **`searchCode`**: Placeholder for future organization-wide code search.
+
+### Automation & CI/CD (Pipelines)
 - **`triggerPipeline`**: Run builds/pipelines with optional branch and parameters.
 - **`getPipelineLogs`**: Fetch build logs for analysis and troubleshooting.
+
+## Security & Sanitization
+
+This server is built with a "Security First" approach to protect your Azure DevOps environment and sensitive data:
+
+- **Secure Token Storage**: Authentication tokens are stored in a platform-specific, secure location in the user's home directory (`~/.mcp/azure-devops-mcp-server/token_cache.json`), preventing accidental exposure in project directories.
+- **Sensitive Data Redaction**: The server automatically redacts URLs, Personal Access Tokens (PATs), and Bearer tokens from all error messages, logs, and standard output.
+- **Helpful Authorization Guidance**: When access is denied (401/403), the server provides specific advice on which PAT scopes (e.g., `Work Items: Read`) are missing.
+- **Context Protection**: A `.geminiignore` file ensures that sensitive workspace data, environment variables, and local caches are never indexed or exposed to the LLM.
+
+## Context Optimization
+
+To minimize token usage and improve LLM performance, this server implements:
+
+- **Field Filtering**: API responses for work items are stripped of redundant metadata, returning only essential fields like Title, State, Type, and AssignedTo.
+- **Concise Summaries**: Lists of repositories, projects, and iterations are formatted to provide high-signal information without excessive JSON overhead.
 
 ## Setup
 
 ### Prerequisites
 - Node.js (v18+)
-- An Azure DevOps account and Organization URL.
-- A Personal Access Token (PAT) with appropriate scopes (`Work Items: Read/Write`, `Code: Read/Write`, `Build: Read/Write`).
+- An Azure DevOps organization URL.
+- A Personal Access Token (PAT) with appropriate scopes (e.g., `Work Items: Read/Write`, `Code: Read/Write`, `Build: Read/Write`).
 
 ### Installation
 
@@ -44,31 +60,22 @@ A Model Context Protocol (MCP) server that enables LLM agents to interact direct
    npm install
    ```
 
-3. Configure environment variables in a `.env` file. You can choose one of the following authentication methods:
+3. Configure environment variables in a `.env` file. Choose one of the following authentication methods:
 
-   **Option A: Interactive Login (Recommended for Users)**
-   *Requires a Client ID and Secret with "Web" redirect URI set to `http://localhost:3000/callback`.*
+   **Option A: Personal Access Token (PAT) - Recommended**
+   ```env
+   AZURE_DEVOPS_ORG_URL=https://dev.azure.com/YourOrganization
+   AZURE_DEVOPS_PAT=your-personal-access-token
+   ```
+
+   **Option B: Interactive OAuth (Interative Login)**
    ```env
    AZURE_DEVOPS_ORG_URL=https://dev.azure.com/YourOrganization
    AZURE_DEVOPS_CLIENT_ID=your-client-id
    AZURE_DEVOPS_CLIENT_SECRET=your-client-secret
    CALLBACK_PORT=3000
    ```
-   *Action:* Call the `login` tool via your MCP host (e.g., Claude) to get a login link.
-
-   **Option B: PAT (Recommended for quick local use)**
-   ```env
-   AZURE_DEVOPS_ORG_URL=https://dev.azure.com/YourOrganization
-   AZURE_DEVOPS_PAT=your-personal-access-token
-   ```
-
-   **Option C: Service Principal (System-to-System)**
-   ```env
-   AZURE_DEVOPS_ORG_URL=https://dev.azure.com/YourOrganization
-   AZURE_DEVOPS_CLIENT_ID=your-client-id
-   AZURE_DEVOPS_CLIENT_SECRET=your-client-secret
-   AZURE_DEVOPS_TENANT_ID=your-tenant-id
-   ```
+   *Action:* Call the `login` tool via your MCP host (e.g., Claude) to receive an authorization link.
 
 4. Build the project:
    ```bash
@@ -95,6 +102,16 @@ Add the following to your `claude_desktop_config.json`:
 }
 ```
 
+## Project Structure
+
+The project follows a modular architecture for better auditability and maintainability:
+
+- `src/auth.ts`: Manages PAT and OAuth2 authentication, including secure token caching.
+- `src/handlers.ts`: Contains the logic for all MCP tool handlers.
+- `src/schemas.ts`: Defines Zod schemas for strict input validation.
+- `src/utils.ts`: Security redaction and context optimization utilities.
+- `src/index.ts`: Main server entry point and tool dispatcher.
+
 ## Development
 
 ### Running Tests
@@ -106,11 +123,6 @@ npm test
 ```bash
 npm run build
 ```
-
-## Security
-- **PAT Scoping:** Always use a PAT with the minimum required permissions.
-- **Environment Variables:** Never commit your `.env` file or hardcode secrets.
-- **Confirmation:** Destructive actions (like PR merging or work item deletion, if implemented) should be confirmed by the user in the host UI.
 
 ## License
 ISC
