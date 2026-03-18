@@ -7,6 +7,7 @@ const mockQueryByWiql = jest.fn();
 const mockGetRepositories = jest.fn();
 const mockGetItem = jest.fn();
 const mockCreateWorkItem = jest.fn();
+const mockUpdateWorkItem = jest.fn();
 
 jest.mock('azure-devops-node-api', () => ({
   getPersonalAccessTokenHandler: jest.fn(),
@@ -17,6 +18,7 @@ jest.mock('azure-devops-node-api', () => ({
       getWorkItems: mockGetWorkItems,
       queryByWiql: mockQueryByWiql,
       createWorkItem: mockCreateWorkItem,
+      updateWorkItem: mockUpdateWorkItem,
     }),
     getGitApi: jest.fn().mockResolvedValue({
       getRepositories: mockGetRepositories,
@@ -62,7 +64,7 @@ describe('Azure DevOps MCP Server Integration Tests', () => {
         'queryWorkItems', 'listRepositories', 'getFileContent', 'searchCode',
         'createEpic', 'createFeature', 'createUserStory', 'createBug',
         'getWorkItemHierarchy', 'listPullRequests', 'getPRDiff', 'commentOnPR',
-        'triggerPipeline', 'getPipelineLogs'
+        'triggerPipeline', 'getPipelineLogs', 'updateWorkItem'
       ];
 
       expectedTools.forEach(tool => {
@@ -102,6 +104,32 @@ describe('Azure DevOps MCP Server Integration Tests', () => {
 
       expect(response.content[0].text).toContain('Repo1');
       expect(mockGetRepositories).toHaveBeenCalledWith('TestProject');
+    });
+  });
+
+  describe('Tool Execution (updateWorkItem)', () => {
+    it('should update a work item with title, description, and acceptanceCriteria', async () => {
+      mockUpdateWorkItem.mockResolvedValue({ id: 123 });
+
+      const response = await callHandler({
+        method: 'tools/call',
+        params: {
+          name: 'updateWorkItem',
+          arguments: {
+            id: 123,
+            title: 'Updated Title',
+            description: 'Updated Description',
+            acceptanceCriteria: 'Updated Acceptance Criteria'
+          }
+        }
+      });
+
+      expect(response.content[0].text).toContain('Work item 123 updated successfully.');
+      expect(mockUpdateWorkItem).toHaveBeenCalledWith(null, [
+        { op: 0, path: '/fields/System.Title', value: 'Updated Title' },
+        { op: 0, path: '/fields/System.Description', value: 'Updated Description' },
+        { op: 0, path: '/fields/Microsoft.VSTS.Common.AcceptanceCriteria', value: 'Updated Acceptance Criteria' }
+      ], 123);
     });
   });
 

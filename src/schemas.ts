@@ -26,8 +26,12 @@ export const UpdateWorkItemSchema = z.object({
   id: z.number(),
   title: z.string().optional(),
   description: z.string().optional(),
+  acceptanceCriteria: z.string().optional(),
+  reproSteps: z.string().optional(),
   state: z.string().optional(),
   assignedTo: z.string().optional(),
+  areaPath: z.string().optional(),
+  iterationPath: z.string().optional(),
 });
 
 export const AddCommentSchema = z.object({
@@ -61,6 +65,7 @@ export const SearchCodeSchema = z.object({
 export const CreateEpicSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
+  acceptanceCriteria: z.string().optional(),
   areaPath: z.string().optional(),
   project: z.string(),
 });
@@ -69,6 +74,8 @@ export const CreateFeatureSchema = z.object({
   title: z.string(),
   parentEpicId: z.number(),
   description: z.string().optional(),
+  acceptanceCriteria: z.string().optional(),
+  areaPath: z.string().optional(),
   project: z.string(),
 });
 
@@ -76,6 +83,8 @@ export const CreateUserStorySchema = z.object({
   title: z.string(),
   parentFeatureId: z.number(),
   description: z.string().optional(),
+  acceptanceCriteria: z.string().optional(),
+  areaPath: z.string().optional(),
   project: z.string(),
 });
 

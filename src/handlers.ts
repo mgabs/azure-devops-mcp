@@ -130,13 +130,17 @@ export const toolHandlers: Record<string, ToolHandler> = {
   },
 
   updateWorkItem: async (conn, args) => {
-    const { id, title, description, state, assignedTo } = schemas.UpdateWorkItemSchema.parse(args);
+    const { id, title, description, acceptanceCriteria, reproSteps, state, assignedTo, areaPath, iterationPath } = schemas.UpdateWorkItemSchema.parse(args);
     const witApi = await conn.getWorkItemTrackingApi();
     const patch: JsonPatchOperation[] = [];
     if (title !== undefined) patch.push({ op: Operation.Add, path: '/fields/System.Title', value: title });
     if (description !== undefined) patch.push({ op: Operation.Add, path: '/fields/System.Description', value: description });
+    if (acceptanceCriteria !== undefined) patch.push({ op: Operation.Add, path: '/fields/Microsoft.VSTS.Common.AcceptanceCriteria', value: acceptanceCriteria });
+    if (reproSteps !== undefined) patch.push({ op: Operation.Add, path: '/fields/Microsoft.VSTS.TCM.ReproSteps', value: reproSteps });
     if (state !== undefined) patch.push({ op: Operation.Add, path: '/fields/System.State', value: state });
     if (assignedTo !== undefined) patch.push({ op: Operation.Add, path: '/fields/System.AssignedTo', value: assignedTo });
+    if (areaPath !== undefined) patch.push({ op: Operation.Add, path: '/fields/System.AreaPath', value: areaPath });
+    if (iterationPath !== undefined) patch.push({ op: Operation.Add, path: '/fields/System.IterationPath', value: iterationPath });
     if (patch.length === 0) throw new Error('No updates provided.');
     await witApi.updateWorkItem(null, patch, id);
     return { content: [{ type: 'text', text: `Work item ${id} updated successfully.` }] };
@@ -161,34 +165,42 @@ export const toolHandlers: Record<string, ToolHandler> = {
   },
 
   createEpic: async (conn, args, orgUrl) => {
-    const { title, description, project } = schemas.CreateEpicSchema.parse(args);
+    const { title, description, acceptanceCriteria, areaPath, project } = schemas.CreateEpicSchema.parse(args);
     const witApi = await conn.getWorkItemTrackingApi();
     const patch: JsonPatchOperation[] = [
       { op: Operation.Add, path: '/fields/System.Title', value: title },
       { op: Operation.Add, path: '/fields/System.Description', value: description || '' },
     ];
+    if (acceptanceCriteria) patch.push({ op: Operation.Add, path: '/fields/Microsoft.VSTS.Common.AcceptanceCriteria', value: acceptanceCriteria });
+    if (areaPath) patch.push({ op: Operation.Add, path: '/fields/System.AreaPath', value: areaPath });
     const workItem = await witApi.createWorkItem(null, patch, project, 'Epic');
     return { content: [{ type: 'text', text: `Epic created: ${workItem.id}` }] };
   },
 
   createFeature: async (conn, args, orgUrl) => {
-    const { title, parentEpicId, project } = schemas.CreateFeatureSchema.parse(args);
+    const { title, parentEpicId, description, acceptanceCriteria, areaPath, project } = schemas.CreateFeatureSchema.parse(args);
     const witApi = await conn.getWorkItemTrackingApi();
     const patch: JsonPatchOperation[] = [
       { op: Operation.Add, path: '/fields/System.Title', value: title },
+      { op: Operation.Add, path: '/fields/System.Description', value: description || '' },
       { op: Operation.Add, path: '/relations/-', value: { rel: 'System.LinkTypes.Hierarchy-Reverse', url: `${orgUrl}/_apis/wit/workItems/${parentEpicId}` } },
     ];
+    if (acceptanceCriteria) patch.push({ op: Operation.Add, path: '/fields/Microsoft.VSTS.Common.AcceptanceCriteria', value: acceptanceCriteria });
+    if (areaPath) patch.push({ op: Operation.Add, path: '/fields/System.AreaPath', value: areaPath });
     const workItem = await witApi.createWorkItem(null, patch, project, 'Feature');
     return { content: [{ type: 'text', text: `Feature created: ${workItem.id}` }] };
   },
 
   createUserStory: async (conn, args, orgUrl) => {
-    const { title, parentFeatureId, project } = schemas.CreateUserStorySchema.parse(args);
+    const { title, parentFeatureId, description, acceptanceCriteria, areaPath, project } = schemas.CreateUserStorySchema.parse(args);
     const witApi = await conn.getWorkItemTrackingApi();
     const patch: JsonPatchOperation[] = [
       { op: Operation.Add, path: '/fields/System.Title', value: title },
+      { op: Operation.Add, path: '/fields/System.Description', value: description || '' },
       { op: Operation.Add, path: '/relations/-', value: { rel: 'System.LinkTypes.Hierarchy-Reverse', url: `${orgUrl}/_apis/wit/workItems/${parentFeatureId}` } },
     ];
+    if (acceptanceCriteria) patch.push({ op: Operation.Add, path: '/fields/Microsoft.VSTS.Common.AcceptanceCriteria', value: acceptanceCriteria });
+    if (areaPath) patch.push({ op: Operation.Add, path: '/fields/System.AreaPath', value: areaPath });
     const workItem = await witApi.createWorkItem(null, patch, project, 'User Story');
     return { content: [{ type: 'text', text: `User Story created: ${workItem.id}` }] };
   },
