@@ -47,6 +47,21 @@ To minimize token usage and improve LLM performance, this server implements:
 - An Azure DevOps organization URL.
 - A Personal Access Token (PAT) with appropriate scopes (e.g., `Work Items: Read/Write`, `Code: Read/Write`, `Build: Read/Write`).
 
+### Generating a Personal Access Token (PAT)
+
+To use this server with a PAT, follow these steps:
+
+1.  Log in to your Azure DevOps organization (`https://dev.azure.com/YourOrganization`).
+2.  In the upper-right corner, click **User settings** (the user icon with a gear) and select **Personal access tokens**.
+3.  Click **+ New Token**.
+4.  Give your token a name (e.g., `MCP-Server`) and set an expiration date.
+5.  Select **Custom defined** for scopes and ensure the following are checked:
+    -   **Work Items**: `Read & write` (Required for Boards, Epics, Features, Stories, and Bugs)
+    -   **Code**: `Read & write` (Required for Repos, Pull Requests, and file content)
+    -   **Build**: `Read & execute` (Required for Pipelines and build logs)
+    -   **Project and Team**: `Read` (Required for listing projects, iterations, and areas)
+6.  Click **Create** and **copy the token immediately** (you won't be able to see it again).
+
 ### Installation
 
 1. Clone the repository:
