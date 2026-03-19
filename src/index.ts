@@ -38,6 +38,7 @@ const TOOL_SCOPES: Record<string, string> = {
   listFeatures: 'Work Items (Read)',
   listUserStories: 'Work Items (Read)',
   listBacklog: 'Work Items (Read)',
+  searchWorkItems: 'Work Items (Read)',
   createEpic: 'Work Items (Read/Write)',
   createFeature: 'Work Items (Read/Write)',
   createUserStory: 'Work Items (Read/Write)',
@@ -55,9 +56,27 @@ const TOOL_SCOPES: Record<string, string> = {
   listPullRequests: 'Code (Read)',
   getPRDiff: 'Code (Read)',
   commentOnPR: 'Code (Read/Write)',
+  approvePR: 'Code (Read/Write)',
+  mergePR: 'Code (Read/Write)',
+  createPR: 'Code (Read/Write)',
+  listWikis: 'Wiki (Read)',
+  getWikiPage: 'Wiki (Read)',
+  listTestRuns: 'Test (Read)',
+  getTestResults: 'Test (Read)',
+  listVariableGroups: 'Build (Read)',
+  getVariableGroup: 'Build (Read)',
+  updateVariableGroup: 'Build (Read/Write)',
+  getPRPolicyEvaluations: 'Code (Read)',
+  listWorkItemStates: 'Project and Team (Read)',
+  listWorkItemFields: 'Project and Team (Read)',
   triggerPipeline: 'Build (Read/Execute)',
+  listPipelines: 'Build (Read)',
+  getBuildStatus: 'Build (Read)',
   getPipelineLogs: 'Build (Read)',
   listProjects: 'Project and Team (Read)',
+  getCurrentUser: 'Project and Team (Read)',
+  listTeams: 'Project and Team (Read)',
+  listTeamMembers: 'Project and Team (Read)',
 };
 
 export const server = new Server(
@@ -166,6 +185,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: 'searchWorkItems',
+      description: 'Search work items by keyword.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+          searchText: { type: 'string' },
+          top: { type: 'number' },
+        },
+        required: ['searchText'],
+      },
+    },
+    {
       name: 'updateWorkItem',
       description: 'Update a work item (Epic, Feature, Story, or Bug).',
       inputSchema: {
@@ -213,6 +245,34 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       name: 'listProjects',
       description: 'List all projects in the organization.',
       inputSchema: { type: 'object', properties: {} },
+    },
+    {
+      name: 'getCurrentUser',
+      description: 'Get the currently authenticated user.',
+      inputSchema: { type: 'object', properties: {} },
+    },
+    {
+      name: 'listTeams',
+      description: 'List teams in a project.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+        },
+        required: ['project'],
+      },
+    },
+    {
+      name: 'listTeamMembers',
+      description: 'List members of a team.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+          teamId: { type: 'string' },
+        },
+        required: ['project', 'teamId'],
+      },
     },
     {
       name: 'listIterations',
@@ -377,6 +437,187 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: 'approvePR',
+      description: 'Approve or vote on a Pull Request.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          repositoryId: { type: 'string' },
+          pullRequestId: { type: 'number' },
+          project: { type: 'string' },
+          vote: { type: 'number', description: '10 = Approved, 5 = Approved with suggestions, 0 = No vote, -5 = Waiting for author, -10 = Rejected' },
+        },
+        required: ['repositoryId', 'pullRequestId'],
+      },
+    },
+    {
+      name: 'mergePR',
+      description: 'Merge (complete) a Pull Request.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          repositoryId: { type: 'string' },
+          pullRequestId: { type: 'number' },
+          project: { type: 'string' },
+          commitMessage: { type: 'string' },
+          deleteSourceBranch: { type: 'boolean', default: true },
+          mergeStrategy: { type: 'number', description: '0 = NoFastForward, 1 = Squash, 2 = Rebase, 3 = RebaseMerge' },
+        },
+        required: ['repositoryId', 'pullRequestId'],
+      },
+    },
+    {
+      name: 'createPR',
+      description: 'Create a new Pull Request.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          repositoryId: { type: 'string' },
+          project: { type: 'string' },
+          title: { type: 'string' },
+          description: { type: 'string' },
+          sourceRefName: { type: 'string', description: 'e.g. refs/heads/feature-branch' },
+          targetRefName: { type: 'string', description: 'e.g. refs/heads/main' },
+          isDraft: { type: 'boolean', default: false },
+        },
+        required: ['repositoryId', 'title', 'sourceRefName'],
+      },
+    },
+    {
+      name: 'listWikis',
+      description: 'List all wikis in a project or organization.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+        },
+      },
+    },
+    {
+      name: 'getWikiPage',
+      description: 'Get the content of a wiki page.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+          wikiIdentifier: { type: 'string' },
+          path: { type: 'string', description: 'The path of the wiki page.' },
+        },
+        required: ['project', 'wikiIdentifier'],
+      },
+    },
+    {
+      name: 'listTestRuns',
+      description: 'List test runs in a project.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+          top: { type: 'number', default: 50 },
+        },
+        required: ['project'],
+      },
+    },
+    {
+      name: 'getTestResults',
+      description: 'Get test results for a specific test run.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+          runId: { type: 'number' },
+          top: { type: 'number', default: 50 },
+        },
+        required: ['project', 'runId'],
+      },
+    },
+    {
+      name: 'listVariableGroups',
+      description: 'List variable groups in a project.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+          groupName: { type: 'string' },
+          top: { type: 'number', default: 50 },
+        },
+        required: ['project'],
+      },
+    },
+    {
+      name: 'getVariableGroup',
+      description: 'Get a specific variable group.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+          groupId: { type: 'number' },
+        },
+        required: ['project', 'groupId'],
+      },
+    },
+    {
+      name: 'updateVariableGroup',
+      description: 'Update a variable group.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+          groupId: { type: 'number' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          variables: {
+            type: 'object',
+            additionalProperties: {
+              type: 'object',
+              properties: {
+                value: { type: 'string' },
+                isSecret: { type: 'boolean' },
+              },
+            },
+          },
+        },
+        required: ['project', 'groupId'],
+      },
+    },
+    {
+      name: 'getPRPolicyEvaluations',
+      description: 'Get policy evaluations for a Pull Request.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+          artifactId: { type: 'string', description: 'e.g. vstfs:///CodeReview/PullRequestId/123' },
+          includeNotApplicable: { type: 'boolean', default: false },
+        },
+        required: ['project', 'artifactId'],
+      },
+    },
+    {
+      name: 'listWorkItemStates',
+      description: 'List valid states for a work item type in a process.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          processId: { type: 'string' },
+          witRefName: { type: 'string', description: 'e.g. Microsoft.VSTS.WorkItemTypes.Bug' },
+        },
+        required: ['processId', 'witRefName'],
+      },
+    },
+    {
+      name: 'listWorkItemFields',
+      description: 'List all fields for a work item type in a process.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          processId: { type: 'string' },
+          witRefName: { type: 'string' },
+        },
+        required: ['processId', 'witRefName'],
+      },
+    },
+    {
       name: 'triggerPipeline',
       description: 'Run an Azure DevOps Pipeline.',
       inputSchema: {
@@ -386,6 +627,29 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           project: { type: 'string' },
         },
         required: ['pipelineId', 'project'],
+      },
+    },
+    {
+      name: 'listPipelines',
+      description: 'List all pipeline definitions in a project.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string' },
+        },
+        required: ['project'],
+      },
+    },
+    {
+      name: 'getBuildStatus',
+      description: 'Get the status of a specific build.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          buildId: { type: 'number' },
+          project: { type: 'string' },
+        },
+        required: ['buildId', 'project'],
       },
     },
     {

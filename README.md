@@ -23,6 +23,29 @@ A Model Context Protocol (MCP) server that enables LLM agents to interact direct
 ### Automation & CI/CD (Pipelines)
 - **`triggerPipeline`**: Run builds/pipelines with optional branch and parameters.
 - **`getPipelineLogs`**: Fetch build logs for analysis and troubleshooting.
+- **`listPipelines`**: Discover all pipeline definitions in a project.
+- **`getBuildStatus`**: Get the real-time status and result of a specific build.
+
+### Advanced PR & Policy Insights
+- **`approvePR`**: Approve or vote on a Pull Request.
+- **`mergePR`**: Merge a pull request with support for different strategies (squash, no-fast-forward).
+- **`createPR`**: Create a new pull request.
+- **`getPRPolicyEvaluations`**: Check the status of all policies (e.g., "Build Validation", "Required Reviewers") blocking a PR.
+
+### Team & Identity Context
+- **`getCurrentUser`**: Identify the currently authenticated user.
+- **`listTeams`**: Find all teams within a project.
+- **`listTeamMembers`**: Retrieve members of a specific team.
+
+### Wiki & Test Results
+- **`listWikis`**: Discover all wikis in a project.
+- **`getWikiPage`**: Read the content of a specific wiki page.
+- **`listTestRuns`**: View a history of test executions.
+- **`getTestResults`**: Get detailed results for a test run to diagnose failures.
+
+### DevOps Configuration & Process
+- **`listVariableGroups`**, **`getVariableGroup`**, **`updateVariableGroup`**: Manage pipeline configurations and variables.
+- **`listWorkItemStates`**, **`listWorkItemFields`**: Discover the specific process and workflow for a project's work items.
 
 ## Security & Sanitization
 
@@ -58,9 +81,15 @@ To use this server with a PAT, follow these steps:
 5.  Select **Custom defined** for scopes and ensure the following are checked:
     -   **Work Items**: `Read & write` (Required for Boards, Epics, Features, Stories, and Bugs)
     -   **Code**: `Read & write` (Required for Repos, Pull Requests, and file content)
-    -   **Build**: `Read & execute` (Required for Pipelines and build logs)
-    -   **Project and Team**: `Read` (Required for listing projects, iterations, and areas)
-6.  Click **Create** and **copy the token immediately** (you won't be able to see it again).
+    - **Build**: `Read & execute` (Required for Pipelines and build logs)
+        -   **Project and Team**: `Read` (Required for listing projects, iterations, and areas)
+        -   **Wiki**: `Read` (Required for reading wiki pages)
+        -   **Test Management**: `Read` (Required for listing test runs and results)
+        -   **Variable Groups**: `Read & manage` (Required for managing pipeline variables)
+        -   **Policy**: `Read` (Required for reading PR policy evaluations)
+        -   **Work Item Tracking Process**: `Read` (Required for discovering work item states and fields)
+    6.  Click **Create** and **copy the token immediately** (you won't be able to see it again).
+
 
 ### Installation
 
